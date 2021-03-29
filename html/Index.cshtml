@@ -1,0 +1,1175 @@
+﻿@model PagedList.IPagedList<BISearchEngine.Shared.Entity.SearchModel>
+@using PagedList.Mvc;
+@using MvcFlash.Core.Extensions;
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="~/Content/jQuery.FileUpload/css/jquery.fileupload.css">
+
+<script src="@Url.Content("~/Scripts/jQuery.FileUpload/jquery.fileupload.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jQuery.FileUpload/jquery.iframe-transport.js")" type="text/javascript"></script>
+<script type="text/javascript" src="~/Scripts/spin.min.js"></script>
+@{
+    ViewBag.Title = "Index";
+}
+<style type="text/css">
+    #report {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+        #report h4 {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        #report img {
+            float: right;
+        }
+
+        #report ul {
+            margin: 10px 0 10px 40px;
+            padding: 0px;
+        }
+
+        #report th {
+            background: #7CB8E2 url('Images/header_bkg.png') repeat-x scroll center left;
+            color: #fff;
+            padding: 7px 15px;
+            text-align: left;
+        }
+
+        #report td {
+            background: #C7DDEE none repeat-x scroll center left;
+            color: #000;
+            padding: 7px 15px;
+        }
+
+        #report tr.odd td {
+            background: #fff url('Images/row_bkg.png') repeat-x scroll center left;
+            cursor: pointer;
+        }
+
+        #report div.arrow {
+            background: transparent url('Images/arrows.png') no-repeat scroll 0px -16px;
+            width: 16px;
+            height: 16px;
+            display: block;
+        }
+
+        #report div.up {
+            background-position: 0px 0px;
+        }
+</style>
+<style>
+    div.block {
+        overflow: hidden;
+    }
+
+        div.block label {
+            width: 160px;
+            display: block;
+            float: left;
+            text-align: left;
+        }
+</style>
+<style type="text/css">
+    #loading {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.8);
+        z-index: 1000;
+    }
+
+    #loadingcontent {
+        display: table;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    #loadingspinner {
+        display: table-cell;
+        vertical-align: middle;
+        width: 100%;
+        text-align: center;
+        font-size: larger;
+        padding-top: 80px;
+    }
+</style>
+
+<div id="container">
+    <div>
+        <div id="logo" style="background: url('Images/BMISearch.png');padding:10px;border:1px solid #000000;">
+            <h2>BMI Investigator</h2><br />
+        </div>
+        <div id="resultsBox" style="padding:10px;border:1px solid #000000;">
+            <h3>Search Results</h3><br />
+            <div style="padding-bottom:5px">
+                <table id="report">
+                    <tr>
+                        <th>
+                            @Html.ActionLink("Clinic Num", "Index", new
+                       {
+                           sortOrder = ViewBag.ClinicNumSortParm
+                       })
+                        </th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @item.PersonId.ToString()
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="arrow"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="5">
+                                @*<div class="block">
+                                        <label style="color: #f0ad4e">Concept</label>
+                                        <label>:@item.ConceptCode</label>
+                                    </div>
+                                    <div class="block">
+                                        <label style="color: #f0ad4e">Concept</label>
+                                        <label>:@item.ConceptDescription</label>
+                                    </div>*@
+                                <div class="block">
+                                    <label style="color: #f0ad4e">Ethnicity</label>
+                                    <label>:@item.Ethnicity</label>
+                                </div>
+                                <div class="block">
+                                    <label style="color: #f0ad4e">Race</label>
+                                    <label>:@item.Race</label>
+                                </div>
+                                <div class="block">
+                                    <label style="color: #f0ad4e">Age</label>
+                                    <label>:@item.Age</label>
+                                </div>
+                                <div class="block">
+                                    <label style="color: #f0ad4e">Gender</label>
+                                    <label>:@item.Gender</label>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                </table>
+                <br />
+                Total records = @Model.TotalItemCount
+                <br />
+                Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+                @Html.PagedListPager(Model, page => Url.Action("Index",
+             new
+             {
+                 page,
+                 sortOrder = ViewBag.CurrentSort
+             }))
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button id="exportResults" class="btn btn-primary" data-stmt="false">Export Results</button>
+        </div>
+        <div class="btn-group">
+            <button id="visualizeResults" class="btn btn-primary" data-stmt="false">Visualize</button>
+            <input type="hidden" id="ch" name="chidden" />
+        </div>
+
+        <div>
+            <span id="msg1" style="color:red;" />
+        </div>
+        <div id="builder"></div>
+
+        <div class="btn-group">
+            <button class="btn btn-warning reset">Reset</button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary parse-sql" data-stmt="false">Query</button>
+        </div>
+
+        <div class="btn-group">
+            <button id="exportQuery" class="btn btn-primary" data-stmt="false">Export Query</button>
+            <input id="fileUpload" type="file" name="files" style="display:none" accept=".out">
+        </div>
+
+        <div class="btn-group">
+            @*<button id="importQuery" class="btn btn-primary">Import Query</button>*@
+            @*<button id="importQuery" class="btn btn-primary" data-toggle="modal" data-target="#logicModal">Import Query</button>*@
+            <button id="importQuery" class="btn btn-primary">Import Query</button>
+            <input id="fileUpload" type="file" name="files" style="display:none" />
+            <input type="hidden" id="lh" name="lhidden" />
+        </div>
+
+        <div>
+            <span id="msg" style="color:red;" />
+        </div>
+        <div id="result">
+            @*<label for="amount">Price range:</label>
+                <input type="text" id="amount" readonly style="border:0; color:#f6931f; font-weight:bold;">
+                <div id="slider-range"></div>*@
+            <pre></pre>
+        </div>
+        @*<input type="range" name="rangeInput" min="0" max="100" onchange="updateTextInput(this.value);">
+            <input type="text" id="textInput" value="">*@
+        @*<input type="text" id="textInput" style="width:20px">*@
+        @using (Html.BeginForm("Index", "Home", FormMethod.Post))
+        {
+            <div class="btn-group">
+                <button id="searchSubmit" class="btn btn-info" type="submit" data-stmt="false">Search</button>
+            </div>
+            <input type="hidden" id="qh" name="qhidden" />
+        }
+        @*<div>
+                @Html.Flash()
+            </div>*@
+        <div>
+            <p> @Html.Encode(ViewBag.elapsedTime) </p>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="logicModal" tabindex="-1" role="dialog" aria-labelledby="logicModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="logicModalLabel">Confirm</h4>
+            </div>
+            <div class="modal-body">
+                <p>One query is already present in the query section. You can AND/OR with the existing query or create a new query. Please select an appropriate action.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelQuery" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button id="andQuery" type="button" class="btn btn-primary">AND</button>
+                <button id="orQuery" type="button" class="btn btn-primary">OR</button>
+                <button id="cnQuery" type="button" class="btn btn-primary">Create New</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="chartModal" tabindex="-1" role="dialog" aria-labelledby="chartModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="chartModalLabel">Chart</h4>
+            </div>
+            <div class="modal-body" id="chartContainer" style="width:550px;">
+                <canvas id="dvbarchart"></canvas>
+            </div>
+            <div class="modal-footer">
+                @*<p>Click on one of the buttons below to get the respective data</p>*@
+                <button id="raceChart" type="button" class="btn btn-primary">Race</button>
+                <button id="ethChart" type="button" class="btn btn-primary">Ethnicity</button>
+                <button id="genderChart" type="button" class="btn btn-primary">Gender</button>
+                <button id="ageChart" type="button" class="btn btn-primary">Age</button>
+                <button id="closeChart" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loading">
+    <div id="loadingcontent" style="">
+        <p id="loadingspinner" style="">
+            Loading...Please wait...
+        </p>
+    </div>
+</div>
+
+<script type="text/javascript">
+    //function updateTextInput(val) {
+    //    document.getElementById('textInput').value = val;
+    //}
+    //$(function () {
+    //    $("#slider-range").slider({
+    //        range: true,
+    //        min: 0,
+    //        max: 500,
+    //        values: [75, 300],
+    //        slide: function (event, ui) {
+    //            $("#amount").val("$" + ui.values[0] + " - $" + ui.values[1]);
+    //        }
+    //    });
+    //    $("#amount").val("$" + $("#slider-range").slider("values", 0) +
+    //      " - $" + $("#slider-range").slider("values", 1));
+    //});
+    $("#searchSubmit").click(function () {
+        var queryString = $("#result").text().trim();
+        document.getElementById('qh').value = queryString;
+
+        if (queryString == "") {
+            alert("Query is not generated. Please click on SQL to generate the query");
+            return false;
+        }
+        else {
+            $("#loading").fadeIn();
+            var opts = {
+                lines: 12, // The number of lines to draw
+                length: 7, // The length of each line
+                width: 4, // The line thickness
+                radius: 10, // The radius of the inner circle
+                color: '#000', // #rgb or #rrggbb
+                speed: 1, // Rounds per second
+                trail: 60, // Afterglow percentage
+                shadow: false, // Whether to render a shadow
+                hwaccel: false // Whether to use hardware acceleration
+            };
+            var target = document.getElementById('loading');
+            var spinner = new Spinner(opts).spin(target);
+            @*$.ajax({
+                url: '@Url.Action("Index", "Home")',
+                type: 'POST',
+                data: { queryString: queryString},
+                traditional: true,
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                }
+            });*@
+        }
+
+    })
+
+    $(document).ready(function () {
+        $("#report tr:odd").addClass("odd");
+        $("#report tr:not(.odd)").hide();
+        $("#report tr:first-child").show();
+
+        $("#report tr.odd").click(function () {
+            $(this).next("tr").toggle();
+            $(this).find(".arrow").toggleClass("up");
+        });
+        //$("#report").jExpand();
+    });
+
+    $('#builder').queryBuilder({
+        filters: [{
+            id: 'concept',
+            label: 'Manifestation',
+            type: 'string',
+            operators: ['equal', 'not_equal'],
+            //validation: {
+            //    format: /^[A-C]{1}.[1-6]{1}$/
+            //},
+            input: function ($rule) {
+                //debugger;
+                var $container = $rule.find('.rule-value-container');
+                $container.unbind('change');
+                $container.on('change', '[name=valueOption]', function () {
+                    //debugger;
+
+                    switch ($(this).val()) {
+                        case 'Yes':
+                            $container.find('[name=operator]').toggle();
+                            $container.find('[name=observationValue]').toggle();
+                            $container.find('[name=units]').toggle();
+                            break;
+                        case 'No':
+                            $container.find('[name=operator]').toggle();
+                            $container.find('[name=observationValue]').toggle();
+                            $container.find('[name=units]').toggle();
+                            $rule.find('[name=observationValue]')[0].value = '';
+                            break;
+                    }
+                });
+
+                //$container.unbind('change');
+                $container.on('change', '[name=timeOption]', function () {
+                    //debugger;
+
+                    switch ($(this).val()) {
+                        case 'Yes':
+                            $container.find('[name=daterange]').toggle();
+                            break;
+                        case 'No':
+                            $container.find('[name=daterange]').toggle();
+                            $rule.find('[name=daterange]')[0].value = '';
+                            break;
+                    }
+                });
+
+                //$container.unbind('change');
+                $container.on('change', '[name=timeOption]', function () {
+                    //debugger;
+                    $('input[name="daterange"]').daterangepicker();
+                });
+                return '\
+    <label for="conceptDesc">Concept Description</label>\
+    <input type="text" name="conceptdesc">\
+<label for="termServer">Terminology Server</label>\
+          <select name="termServer"> \
+            <option value="snomed">SNOMED</option> \
+            <option value="fma">FMA</option> \
+          </select>\
+    <label for="sign">Sign</label>\
+          <select name="sign"> \
+            <option value="NOT MENTIONED">NOT MENTIONED</option> \
+            <option value="POSITIVE">POSITIVE</option> \
+            <option value="NEGATED">NEGATED</option> \
+            <option value="POSSIBLE">POSSIBLE</option> \
+          </select>\
+    <label for="explode">Explode</label>\
+          <select name="explode"> \
+            <option value="True">True</option> \
+            <option value="False">False</option> \
+          </select> \
+    <label for="section">Section</label>\
+          <select name="section" multiple="multiple"> \
+            <option value="ASSESSMENT">ASSESSMENT</option> \
+            <option value="CHIEF_COMPLAINT">CHIEF_COMPLAINT</option> \
+            <option value="COUNSELING">COUNSELING</option> \
+            <option value="DISCUSSION_SUMMARY">DISCUSSION_SUMMARY</option> \
+            <option value="ENVIRONMENTAL_EXPOSURES">ENVIRONMENTAL_EXPOSURES</option> \
+            <option value="FAMILY_HISTORY">FAMILY_HISTORY</option> \
+            <option value="HISTORY_OF_PRESENT_ILLNESS">HISTORY_OF_PRESENT_ILLNESS</option> \
+            <option value="PHYSICAL_EXAM">PHYSICAL_EXAM</option> \
+            <option value="PLAN">PLAN</option> \
+            <option value="PROCEDURE">PROCEDURE</option> \
+            <option value="REASON_FOR_VISIT">REASON_FOR_VISIT</option> \
+            <option value="REVIEW_OF_SYSTEMS">REVIEW_OF_SYSTEMS</option> \
+            <option value="SOCIAL_HISTORY">SOCIAL_HISTORY</option> \
+            <option value="SUBJECTIVE">SUBJECTIVE</option> \
+            <option value="THERAPY">THERAPY</option> \
+          </select> \
+          <select name="criteria"> \
+            <option value="Include">Include</option> \
+            <option value="Exclude">Exclude</option> \
+          </select>\
+            <label for="value">Value</label>\
+          <select name="valueOption"> \
+            <option value="No">No</option> \
+            <option value="Yes">Yes</option> \
+          </select>\
+          <select name="operator" style="display:none;"> \
+            <option value=">">greater than</option> \
+            <option value="<">less than</option> \
+            <option value="=">equals</option> \
+            <option value=":">between</option> \
+          </select>\
+    <input type="text" id="obs" name="observationValue" style="display:none;width:50px;">\
+    <select name="units" style="display:none;"> \
+            <option value="mg/dl">mg/dL</option> \
+            <option value="pound">lb</option> \
+            <option value="ounce">oz</option> \
+            <option value="inch">in</option> \
+            <option value="inch">ft</option> \
+          </select>\
+           <label for="time">Time</label>\
+          <select name="timeOption"> \
+            <option value="No">No</option> \
+            <option value="Yes">Yes</option> \
+          </select>\
+            <input type="text" id="dr" name="daterange" style="display:none;"/> ';
+            },
+            valueParser: function ($rule, value, filter, operator) {
+                //debugger;
+                var queryValue = '';
+
+                if ($rule.find('[name=observationValue]')[0].value) {
+                    queryValue = '[' + $rule.find('[name=conceptdesc]')[0].value
+                      + '][' + $rule.find('[name=termServer]')[0].value
+                      + '][' + $rule.find('[name=sign]')[0].value + ']['
+                        + $rule.find('[name=explode]')[0].value + '][' + $rule.find('[name=section]').val() + ']['
+                        + $rule.find('[name=criteria]')[0].value + '][value' +
+                        $rule.find('[name=operator]')[0].value + $rule.find('[name=observationValue]')[0].value + " " +
+                        $rule.find('[name=units]').val() + ']';
+                }
+                else {
+                    queryValue = '[' + $rule.find('[name=conceptdesc]')[0].value
+                     + '][' + $rule.find('[name=termServer]')[0].value
+                      + '][' + $rule.find('[name=sign]')[0].value + ']['
+                       + $rule.find('[name=explode]')[0].value + '][' + $rule.find('[name=section]').val() + ']['
+                       + $rule.find('[name=criteria]')[0].value + '][]';
+                }
+
+                if ($rule.find('[name=daterange]')[0].value) {
+                    queryValue = queryValue + '[time: ' + $rule.find('[name=daterange]').val() + ']';
+                }
+                else {
+                    queryValue = queryValue + '[]';
+                }
+
+                return queryValue;
+            }
+        },
+        {
+            id: 'demographics',
+            label: 'Demographics',
+            type: 'string',
+            operators: ['equal', 'not_equal'],
+            //validation: {
+            //    format: /^[A-C]{1}.[1-6]{1}$/
+            //},
+            input: function ($rule) {
+                var $container = $rule.find('.rule-value-container');
+                $container.unbind('change');
+                $container.on('change', '[name=rangeslider1]', function () {
+                    //debugger;
+                    $container.find('[name=min]')[0].value = $rule.find('[name=rangeslider1]')[0].value;
+
+                });
+                $container.on('change', '[name=rangeslider2]', function () {
+                    //debugger;
+                    $container.find('[name=max]')[0].value = $rule.find('[name=rangeslider2]')[0].value;
+                });
+                return '\
+    <label for="ethnicity">Ethnicity</label>\
+    <select name="ethnicity" size="4"> \
+            <option value="All">All</option> \
+            <option value="Hispanic or Latino">Hispanic or Latino</option> \
+            <option value="Non-Hispanic or Latino">Non-Hispanic or Latino</option> \
+            <option value="Declined">Declined</option> \
+            <option value="Unknown">Unknown</option> \
+            <option value="">Not Available</option> \
+          </select> \<br>\
+    <label for="race">Race</label>\
+    <select name="race" size="5"> \
+            <option value="All">All</option> \
+            <option value="White">White</option> \
+            <option value="Hispanic">Hispanic</option> \
+            <option value="Black or African American">Black or African American</option> \
+            <option value="Native Hawaiian or Other Pacific Islander">Native Hawaiian or Other Pacific Islander</option> \
+            <option value="Asian">Asian</option> \
+            <option value="American Indian or Alaska Native">American Indian or Alaska Native</option> \
+            <option value="Other Race">Other</option> \
+            <option value="Declined">Declined</option> \
+            <option value="Unknown">Unknown</option> \
+            <option value="Not Reported">Not Reported</option> \
+            <option value="">Not Available</option> \
+          </select> \
+    <label for="gender">Gender</label>\
+          <select name="gender"> \
+            <option value="All">All</option> \
+            <option value="Male">Male</option> \
+            <option value="Female">Female</option> \
+            <option value="Unknown">Unknown</option> \
+          </select>\
+    <label for="age">Age Range in Years</label> \
+    <label for="rangeMin">Min</label> \
+        <input id="slider1" name="rangeslider1" type="range" min="0" max="100" value="20" step="1" /> \
+        <input type="text" value="20" name="min" style="width:40px"> \
+<label for="rangeMax">Max</label> \
+        <input id="slider2" name="rangeslider2" type="range" min="0" max="100" value="50" step="1" /> \
+        <input type="text" value="50" name="max" style="width:40px">';
+            },
+
+            valueParser: function ($rule, value, filter, operator) {
+                //debugger;
+                var queryValue = '';
+                if (Number($rule.find('[name=rangeslider1]')[0].value) >= Number($rule.find('[name=rangeslider2]')[0].value)) {
+                    alert("Minimum value in age can not be greater than the maximum value");
+                }
+                else {
+                    if (Number($rule.find('[name=rangeslider1]')[0].value) == Number($rule.find('[name=rangeslider2]')[0].value)) {
+                        queryValue = '[' + $rule.find('[name=ethnicity]').val()
+                          + '][' + $rule.find('[name=race]').val() + '][' + $rule.find('[name=gender]')[0].value + '][' + $rule.find('[name=rangeslider1]')[0].value + ']';
+                    }
+                    else {
+                        queryValue = '[' + $rule.find('[name=ethnicity]').val()
+                          + '][' + $rule.find('[name=race]').val() + '][' + $rule.find('[name=gender]')[0].value + '][' + $rule.find('[name=rangeslider1]')[0].value + '-' + $rule.find('[name=rangeslider2]')[0].value + ']';
+                    }
+                }
+
+                return queryValue;
+            }
+        },
+        {
+            id: 'conceptcode',
+            label: 'ConceptCode',
+            type: 'string',
+            operators: ['equal', 'not_equal'],
+            //validation: {
+            //    format: /^[A-C]{1}.[1-6]{1}$/
+            //},
+            input: function ($rule) {
+                //debugger;
+                var $container = $rule.find('.rule-value-container');
+                $container.unbind('change');
+                $container.on('change', '[name=valueOptionCode]', function () {
+                    //debugger;
+
+                    switch ($(this).val()) {
+                        case 'Yes':
+                            $container.find('[name=operatorCode]').toggle();
+                            $container.find('[name=observationValueCode]').toggle();
+                            $container.find('[name=unitsCode]').toggle();
+                            break;
+                        case 'No':
+                            $container.find('[name=operatorCode]').toggle();
+                            $container.find('[name=observationValueCode]').toggle();
+                            $container.find('[name=unitsCode]').toggle();
+                            $rule.find('[name=observationValueCode]')[0].value = '';
+                            break;
+                    }
+                });
+
+                //$container.unbind('change');
+                $container.on('change', '[name=timeOptionCode]', function () {
+                    //debugger;
+
+                    switch ($(this).val()) {
+                        case 'Yes':
+                            $container.find('[name=daterangeCode]').toggle();
+                            break;
+                        case 'No':
+                            $container.find('[name=daterangeCode]').toggle();
+                            $rule.find('[name=daterangeCode]')[0].value = '';
+                            break;
+                    }
+                });
+
+                //$container.unbind('change');
+                $container.on('change', '[name=timeOptionCode]', function () {
+                    //debugger;
+                    $('input[name="daterangeCode"]').daterangepicker();
+                });
+                return '\
+    <label for="conceptCode">Concept Code</label>\
+    <input type="text" name="conceptCode">\
+<label for="termServerCode">Terminology Server</label>\
+          <select name="termServerCode"> \
+            <option value="snomed">SNOMED</option> \
+            <option value="fma">FMA</option> \
+          </select>\
+    <label for="signCode">Sign</label>\
+          <select name="signCode"> \
+            <option value="NOT MENTIONED">NOT MENTIONED</option> \
+            <option value="POSITIVE">POSITIVE</option> \
+            <option value="NEGATED">NEGATED</option> \
+            <option value="POSSIBLE">POSSIBLE</option> \
+          </select>\
+    <label for="explodeCode">Explode</label>\
+          <select name="explodeCode"> \
+            <option value="True">True</option> \
+            <option value="False">False</option> \
+          </select> \<br>\
+    <label for="sectionCode">Section</label>\
+          <select name="sectionCode" multiple="multiple"> \
+            <option value="ASSESSMENT">ASSESSMENT</option> \
+            <option value="CHIEF_COMPLAINT">CHIEF_COMPLAINT</option> \
+            <option value="COUNSELING">COUNSELING</option> \
+            <option value="DISCUSSION_SUMMARY">DISCUSSION_SUMMARY</option> \
+            <option value="ENVIRONMENTAL_EXPOSURES">ENVIRONMENTAL_EXPOSURES</option> \
+            <option value="FAMILY_HISTORY">FAMILY_HISTORY</option> \
+            <option value="HISTORY_OF_PRESENT_ILLNESS">HISTORY_OF_PRESENT_ILLNESS</option> \
+            <option value="PHYSICAL_EXAM">PHYSICAL_EXAM</option> \
+            <option value="PLAN">PLAN</option> \
+            <option value="PROCEDURE">PROCEDURE</option> \
+            <option value="REASON_FOR_VISIT">REASON_FOR_VISIT</option> \
+            <option value="REVIEW_OF_SYSTEMS">REVIEW_OF_SYSTEMS</option> \
+            <option value="SOCIAL_HISTORY">SOCIAL_HISTORY</option> \
+            <option value="SUBJECTIVE">SUBJECTIVE</option> \
+            <option value="THERAPY">THERAPY</option> \
+          </select> \
+          <select name="criteriaCode"> \
+            <option value="Include">Include</option> \
+            <option value="Exclude">Exclude</option>\
+          </select>\
+            <label for="valueOptionCode">Value</label>\
+          <select name="valueOptionCode"> \
+            <option value="No">No</option> \
+            <option value="Yes">Yes</option> \
+          </select>\
+          <select name="operatorCode" style="display:none;"> \
+            <option value=">">greater than</option> \
+            <option value="<">less than</option> \
+            <option value="=">equals</option> \
+            <option value=":">between</option> \
+          </select>\
+    <input type="text" id="obsCode" name="observationValueCode" style="display:none;width:50px;">\
+    <select name="units" style="display:none;"> \
+            <option value="mg/dl">mg/dL</option> \
+            <option value="pound">lb</option> \
+            <option value="ounce">oz</option> \
+            <option value="inch">in</option> \
+            <option value="inch">ft</option> \
+          </select>\
+           <label for="timeCode">Time</label>\
+          <select name="timeOptionCode"> \
+            <option value="No">No</option> \
+            <option value="Yes">Yes</option> \
+          </select>\
+            <input type="text" id="dr" name="daterangeCode" style="display:none;"/> ';
+            },
+            valueParser: function ($rule, value, filter, operator) {
+                //debugger;
+                var queryValue = '';
+
+                if ($rule.find('[name=observationValueCode]')[0].value) {
+                    queryValue = '[' + $rule.find('[name=conceptCode]')[0].value + '][' + $rule.find('[name=termServerCode]')[0].value
+                      + '][' + $rule.find('[name=signCode]')[0].value + ']['
+                        + $rule.find('[name=explodeCode]')[0].value + '][' + $rule.find('[name=sectionCode]').val() + ']['
+                        + $rule.find('[name=criteriaCode]')[0].value + '][value' +
+                        $rule.find('[name=operatorCode]')[0].value + $rule.find('[name=observationValueCode]')[0].value + " " +
+                        $rule.find('[name=unitsCode]').val() + ']';
+                }
+                else {
+                    queryValue = '[' + $rule.find('[name=conceptCode]')[0].value
+                     + '][' + $rule.find('[name=termServerCode]')[0].value
+                      + '][' + $rule.find('[name=signCode]')[0].value + ']['
+                       + $rule.find('[name=explodeCode]')[0].value + '][' + $rule.find('[name=sectionCode]').val() + ']['
+                       + $rule.find('[name=criteriaCode]')[0].value + '][]';
+                }
+
+                if ($rule.find('[name=daterangeCode]')[0].value) {
+                    queryValue = queryValue + '[time: ' + $rule.find('[name=daterangeCode]').val() + ']';
+                }
+                else {
+                    queryValue = queryValue + '[]';
+                }
+
+                return queryValue;
+            }
+        }]
+    });
+
+    // reset builder
+    $('.reset').on('click', function () {
+        //$('#builder').queryBuilder('reset');
+        $('#result').find('pre').html("");
+    });
+
+    // get rules
+
+    $('.parse-sql').on('click', function () {
+        var res = $('#builder').queryBuilder('getSQL', $(this).data('stmt'));
+        $('#result').find('pre').html(
+            res.sql + (res.params ? '\n\n' + JSON.stringify(res.params, null, 2) : '')
+          );
+    });
+
+    $('#exportQuery').click(function () {
+        var url = '@Url.Action("GenerateRuleXML", "Home")';
+        var queryString = $("#result").text().trim();
+        $.post(url, { queryString: queryString }, function (data) {
+            if (data.indexOf("http") >= 0) {
+                var str = "Query exported to a file. Please Download the file from " + '<a href="' + data + '">' + "here" + '</a><br/>';
+                $("#msg").html(str);
+                document.getElementById("msg").style.color = "blue";
+            }
+            else { $("#msg").html(data); }
+        });
+    })
+
+    $('#exportResults').click(function () {
+        var url = '@Url.Action("GenerateResults", "Home")';
+        $("#loading").fadeIn();
+        var opts = {
+            lines: 12, // The number of lines to draw
+            length: 7, // The length of each line
+            width: 4, // The line thickness
+            radius: 10, // The radius of the inner circle
+            color: '#000', // #rgb or #rrggbb
+            speed: 1, // Rounds per second
+            trail: 60, // Afterglow percentage
+            shadow: false, // Whether to render a shadow
+            hwaccel: false // Whether to use hardware acceleration
+        };
+        var target = document.getElementById('loading');
+        var spinner = new Spinner(opts).spin(target);
+        $.post(url, function (data) {
+            if (data.indexOf("http") >= 0) {
+                var str = "Results exported to a csv file. Please Download the file from " + '<a href="' + data + '">' + "here" + '</a><br/>';
+                $("#msg1").html(str);
+                $("#loading").fadeOut();
+            }
+            else {
+                $("#msg1").html(data);
+                $("#loading").fadeOut();
+            }
+        });
+    });
+    var barChartData = {}
+    $('#visualizeResults').click(function () {
+        //debugger;
+        $('#chartModalLabel').html("Please click one of the buttons below to view respective data.");
+        var url = '@Url.Action("CheckForResults", "Home")';
+        $.post(url, function (data) {
+            if (data.indexOf("ResultTA") >= 0) {
+                $('#dvbarchart').remove(); // this is my <canvas> element
+                $('#chartContainer').append('<canvas id="dvbarchart"><canvas>');
+                var modal = $("#chartModal");
+                modal.modal('show');                
+            }
+            else {
+                var str = "Results are not available. Please generate results by running a query.";
+                $("#msg1").html(str);
+            }
+        });
+        
+        //var modal = $("#chartModal");
+
+        //modal.modal('show');
+    });
+
+
+    //$('#chartModal').on('shown.bs.modal', function () {
+    //    //debugger;
+    //    if (document.getElementById('ch').value) {
+    //        var modal = $(this);
+    //        $(this).removeData('bs.modal');
+    //        var canvas = modal.find('.modal-body canvas');
+    //        var ctx = canvas[0].getContext("2d");
+    //        var chart = new Chart(ctx).Bar(barChartData, {
+    //            responsive: true
+    //        });
+    //    }
+
+    //})
+
+    //$('#chartModal').on('hidden.bs.modal', function (e) {
+    //    //debugger;
+    //    $(this).removeData('bs.modal');
+    //})
+
+    $('#importQuery').click(function () {
+        if ($("#result").text().trim()) {
+            var modal = $("#logicModal");
+
+            modal.modal('show');
+        }
+        else {
+            document.getElementById('qh').value = '';
+            document.getElementById('lh').value = 'cn';
+
+            $('#fileUpload').click();
+        }
+    });
+
+    $('#andQuery').click(function () {
+        var queryString = $("#result").text().trim();
+        document.getElementById('qh').value = queryString;
+        document.getElementById('lh').value = 'and';
+
+        var modal = $("#logicModal");
+        modal.modal('hide');
+        $('#fileUpload').click();
+    });
+
+    $('#orQuery').click(function () {
+        var queryString = $("#result").text().trim();
+        document.getElementById('qh').value = queryString;
+        document.getElementById('lh').value = 'or';
+
+        var modal = $("#logicModal");
+        modal.modal('hide');
+        $('#fileUpload').click();
+    });
+
+    $('#cnQuery').click(function () {
+        document.getElementById('qh').value = '';
+        var modal = $("#logicModal");
+        document.getElementById('lh').value = 'cn';
+        modal.modal('hide');
+        $('#fileUpload').click();
+    });
+
+    $('#raceChart').click(function () {        
+        //debugger;
+        document.getElementById('ch').value = 'race';
+        $('#chartModalLabel').html("Race");
+        
+        $.ajax({
+            dataType: "json",
+            type: "POST",
+            url: '@Url.Action("GetRaceData", "Home")',
+            data: JSON,
+            success: function (data) {
+                BarChart(data);
+
+                $('#dvbarchart').remove(); // this is my <canvas> element
+                $('#chartContainer').append('<canvas id="dvbarchart"><canvas>');
+
+                var modal = $("#chartModal");
+                var canvas = modal.find('.modal-body canvas');
+                var ctx = canvas[0].getContext("2d");
+                var chart = new Chart(ctx).BarAlt(barChartData, {
+                    responsive: true,
+                    scaleLabel: "          <%=value%>"
+                });
+            },
+            error: function () {
+                alert("wrong");
+            }
+        });
+
+
+    });
+
+    $('#genderChart').click(function () {
+        //debugger;
+        document.getElementById('ch').value = 'gender';
+        $('#chartModalLabel').html("Gender");
+        
+        $.ajax({
+            dataType: "json",
+            type: "POST",
+            url: '@Url.Action("GetGenderData", "Home")',
+            data: JSON,
+            success: function (data) {
+                BarChart(data);
+
+                $('#dvbarchart').remove(); // this is my <canvas> element
+                $('#chartContainer').append('<canvas id="dvbarchart"><canvas>');
+
+                var modal = $("#chartModal");
+                var canvas = modal.find('.modal-body canvas');
+                var ctx = canvas[0].getContext("2d");
+                var chart = new Chart(ctx).BarAlt(barChartData, {
+                    responsive: true,
+                    scaleLabel: "          <%=value%>"
+                });
+            },
+            error: function () {
+                alert("wrong");
+            }
+        });
+    });
+
+    $('#ageChart').click(function () {
+        //debugger;
+        document.getElementById('ch').value = 'age';
+        $('#chartModalLabel').html("Age");
+
+        $.ajax({
+            dataType: "json",
+            type: "POST",
+            url: '@Url.Action("GetAgeData", "Home")',
+            data: JSON,
+            success: function (data) {
+                BarChart(data);
+
+                $('#dvbarchart').remove(); // this is my <canvas> element
+                $('#chartContainer').append('<canvas id="dvbarchart"><canvas>');
+
+                var modal = $("#chartModal");
+                var canvas = modal.find('.modal-body canvas');
+                var ctx = canvas[0].getContext("2d");
+                var chart = new Chart(ctx).LineAlt(barChartData, {
+                    responsive: true
+                });
+            },
+            error: function () {
+                alert("wrong");
+            }
+        });
+    });
+
+    $('#ethChart').click(function () {
+        //debugger;
+        document.getElementById('ch').value = 'eth';
+        $('#chartModalLabel').html("Ethnicity");
+        
+        $.ajax({
+            dataType: "json",
+            type: "POST",
+            url: '@Url.Action("GetEthData", "Home")',
+            data: JSON,
+            success: function (data) {
+                BarChart(data);
+
+                $('#dvbarchart').remove(); // this is my <canvas> element
+                $('#chartContainer').append('<canvas id="dvbarchart"><canvas>');
+
+                var modal = $("#chartModal");
+                var canvas = modal.find('.modal-body canvas');
+                var ctx = canvas[0].getContext("2d");
+                var chart = new Chart(ctx).BarAlt(barChartData, {
+                    responsive: true,
+                    scaleLabel: "          <%=value%>"
+                });
+            },
+            error: function () {
+                alert("wrong");
+            }
+        });
+    });
+
+    var id = 0;
+    $('#fileUpload').fileupload({
+        autoUpload: true,
+        url: '@Url.Action("UploadTempFileToServer", "Home")',
+        dataType: 'json',
+        add: function (e, data) {
+            var fileName = data.files[0].name;
+            var ext = fileName.substr(fileName.lastIndexOf('.'), fileName.length);
+
+            var attachment = {
+                AttachmentName: fileName,
+                Extension: ext
+            }
+            id++;
+            var fileUniqueName = id + ext;
+            var qr = document.getElementById('qh').value;
+            var lo = document.getElementById('lh').value;
+            //Sending the custom attribute to C#
+            data.formData = {
+                fileUniqueName: fileUniqueName, queryString: qr, logicOperation: lo
+            }
+
+            data.submit().success(function (submitData, jqXhr) {
+                $('#result').find('pre').html(submitData);
+
+            }).error(function (errorData, textStatus, errorThrown) {
+                $("#msg").html(errorData);
+            });
+        },
+        fail: function (data, textStatus, errorThrown) {
+            $("#msg").html(data);
+        }
+    });
+
+    Chart.types.Bar.extend({
+        name: "BarAlt",
+        draw: function () {
+            Chart.types.Bar.prototype.draw.apply(this, arguments);
+
+            var ctx = this.chart.ctx;
+            ctx.save();
+            // text alignment and color
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillStyle = this.options.scaleFontColor;
+            // position
+            var x = this.scale.xScalePaddingLeft * 0.4;
+            var y = this.chart.height / 2;
+            // change origin
+            ctx.translate(x, y)
+            // rotate text
+            ctx.rotate(-90 * Math.PI / 180);
+            ctx.fillText(this.datasets[0].label, 0, 0);
+            ctx.restore();
+        }
+    });
+
+    Chart.types.Line.extend({
+        name: "LineAlt",
+        draw: function () {
+            Chart.types.Line.prototype.draw.apply(this, arguments);
+
+            var ctx = this.chart.ctx;
+            ctx.save();
+            // text alignment and color
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillStyle = this.options.scaleFontColor;
+            // position
+            var x = this.scale.xScalePaddingLeft * 0.4;
+            var y = this.chart.height / 2;
+            // change origin
+            ctx.translate(x, y)
+            // rotate text
+            ctx.rotate(-90 * Math.PI / 180);
+            ctx.fillText(this.datasets[0].label, 0, 0);
+            ctx.restore();
+        }
+    });
+
+    function BarChart(data) {
+        //barChartData = {
+        //    labels: data.Month,
+        //    datasets: [
+        //        {
+        //            fillColor: "rgba(220,220,220,0.5)",
+        //            strokeColor: "rgba(220,220,220,0.8)",
+        //            highlightFill: "rgba(220,220,220,0.75)",
+        //            highlightStroke: "rgba(220,220,220,1)",
+        //            data: data.Expences
+        //        },
+        //        {
+        //            fillColor: "rgba(151,187,205,0.5)",
+        //            strokeColor: "rgba(151,187,205,0.8)",
+        //            highlightFill: "rgba(151,187,205,0.75)",
+        //            highlightStroke: "rgba(151,187,205,1)",
+        //            data: data.Income
+        //        }
+        //    ]
+
+        //}
+
+        //debugger;
+        var cd = document.getElementById('ch').value;
+
+        switch (cd) {
+            case 'race':
+                barChartData = {
+                    labels: data.Race,
+                    datasets: [
+                        {
+                            label: "Population",
+                            fillColor: "rgba(151,187,205,0.5)",
+                            strokeColor: "rgba(151,187,205,0.8)",
+                            highlightFill: "rgba(151,187,205,0.75)",
+                            highlightStroke: "rgba(151,187,205,1)",
+                            data: data.RaceCount
+                        }
+                    ]
+                }
+                break;
+            case 'gender':
+                barChartData = {
+                    labels: data.Gender,
+                    datasets: [
+                        {
+                            label: "Population",
+                            fillColor: "rgba(151,187,205,0.5)",
+                            strokeColor: "rgba(151,187,205,0.8)",
+                            highlightFill: "rgba(151,187,205,0.75)",
+                            highlightStroke: "rgba(151,187,205,1)",
+                            data: data.GenderCount
+                        }
+                    ]
+                }
+                break;
+            case 'eth':
+                barChartData = {
+                    labels: data.Ethnicity,
+                    datasets: [
+                        {
+                            label: "Population",
+                            fillColor: "rgba(151,187,205,0.5)",
+                            strokeColor: "rgba(151,187,205,0.8)",
+                            highlightFill: "rgba(151,187,205,0.75)",
+                            highlightStroke: "rgba(151,187,205,1)",
+                            data: data.EthnicityCount
+                        }
+                    ]
+                }
+                break;
+            case 'age':
+                barChartData = {
+                    labels: data.AgeGroup,
+                    datasets: [
+                        {
+                            label: "Population",
+                            fillColor: "rgba(151,187,205,0.5)",
+                            strokeColor: "rgba(151,187,205,0.8)",
+                            highlightFill: "rgba(151,187,205,0.75)",
+                            highlightStroke: "rgba(151,187,205,1)",
+                            data: data.AgeGroupCount
+                        }
+                    ]
+                }
+                break;
+        }
+
+        //document.getElementById('ch').value = '';
+    }
+</script>
