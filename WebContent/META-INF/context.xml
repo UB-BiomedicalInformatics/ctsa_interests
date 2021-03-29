@@ -5,7 +5,7 @@
 		maxActive="100" maxIdle="30" minIdle="13" maxWait="10000"
 		timeBetweenEvictionRunsMillis="34000" minEvictableIdleTimeMillis="55000"
 		validationQuery="SELECT 1" validationInterval="30000" testOnBorrow="true"
-		removeAbandoned="true" removeAbandonedTimeout="233" username="CTSAUser"
-		password="CTSApwd#1" driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
-		url="jdbc:sqlserver://localhost:1433;DatabaseName=CTSA;" />
+		removeAbandoned="true" removeAbandonedTimeout="233" username="SA"
+		password="KingKongVs$5Godzilla" driverClassName="net.sourceforge.jtds.jdbc.Driver"
+		url="jdbc:jtds:sqlserver://localhost:1433;databaseName=CTSA;" />
 </Context>
